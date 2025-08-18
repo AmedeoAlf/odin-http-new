@@ -1,8 +1,6 @@
 package http
 
-import "core:fmt"
 import "core:net"
-import "core:strings"
 
 main :: proc() {
 	load_mime_types_from_csv(#load("filetypes.csv"))
