@@ -101,12 +101,12 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 			if f.size >= unit.size {
 				filesize /= f32(unit.size)
 				suffix = unit.sym
+                break
 			}
 		}
 
 		strings.builder_reset(&builder)
 		fmt.sbprintfln(&builder, "      <tr>")
-		// FIXME
 		fmt.sbprintfln(&builder, "        <td>%.1f%c</td>", filesize, suffix)
 		fmt.sbprintfln(
 			&builder,
