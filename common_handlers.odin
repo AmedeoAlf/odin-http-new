@@ -34,7 +34,10 @@ send_404: Request_Handler : proc(r: ^Request) -> bool {
 	net.send(
 		r.from,
 		transmute([]u8)string(
-			"HTTP/1.1 404 Not Found\r\nContent-type: text/plain\r\n\r\n404 Not Found\r\n",
+			"HTTP/1.1 404 Not Found\r\n" +
+			"Content-type: text/plain\r\n" +
+			"\r\n" +
+			"404 Not Found\r\n",
 		),
 	)
 	return false
@@ -58,27 +61,30 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 		}
 	}
 
-	send_lines(r, {"HTTP/1.1 200 OK", "Content-type: text/html", ""}, "\r\n")
-	send_lines(
-		r,
-		{
-			"<!DOCTYPE html>",
-			"<html lang=\"en\">",
-			"<head>",
-			"  <meta charset=\"UTF-8\">",
-			"  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
-			"<title>Directory listing</title>",
-			"</head>",
-			"<body>",
-			"  <table>",
-			"    <thead>",
-			"      <tr>",
-			"        <th>Size</th>",
-			"        <th>Name</th>",
-			"      </tr>",
-			"    </thead>",
-			"    <tbody>",
-		},
+	net.send(
+		r.from,
+		transmute([]u8)string("HTTP/1.1 200 OK\r\n" + "Content-type: text/html\r\n" + "\r\n"),
+	)
+	net.send(
+		r.from,
+		transmute([]u8)string(
+			"<!DOCTYPE html>\n" +
+			"<html lang=\"en\">\n" +
+			"<head>\n" +
+			"  <meta charset=\"UTF-8\">\n" +
+			"  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
+			"<title>Directory listing</title>\n" +
+			"</head>\n" +
+			"<body>\n" +
+			"  <table>\n" +
+			"    <thead>\n" +
+			"      <tr>\n" +
+			"        <th>Size</th>\n" +
+			"        <th>Name</th>\n" +
+			"      </tr>\n" +
+			"    </thead>\n" +
+			"    <tbody>\n",
+		),
 	)
 
 	builder := strings.builder_make_none()
@@ -101,7 +107,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 			if f.size >= unit.size {
 				filesize /= f32(unit.size)
 				suffix = unit.sym
-                break
+				break
 			}
 		}
 
@@ -120,7 +126,11 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 	}
 	strings.builder_destroy(&builder)
 
-	send_lines(r, {"    </tbody>", "  </table>", "</body>", "</html>"})
+
+	net.send(
+		r.from,
+		transmute([]u8)string("    </tbody>\n" + "  </table>\n" + "</body>\n" + "</html>"),
+	)
 
 	return false
 }
