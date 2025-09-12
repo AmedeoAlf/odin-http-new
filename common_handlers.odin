@@ -1,5 +1,7 @@
 package http
 
+import "./html_gen"
+import "./html_gen/tags"
 import "core:fmt"
 import "core:mem"
 import "core:net"

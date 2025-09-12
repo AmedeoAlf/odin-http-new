@@ -73,11 +73,9 @@ handle_client :: proc(
   if err != nil do return
   resize(&raw_request, bytes_read)
 
-  first_line := string(raw_request[:])[:strings.index(
-    string(raw_request[:]),
-    "\r\n",
-  )]
-  fill_first_line_data(&request, first_line)
+  first_newline := strings.index(string(raw_request[:]), "\r\n")
+  if first_newline == -1 do return
+  fill_first_line_data(&request, string(raw_request[:])[:first_newline])
 
   first_incomplete_line := parse_headers(&request)
 
