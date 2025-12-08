@@ -3,7 +3,10 @@ jpg,image/jpeg
 png,image/png
 css,text/css
 txt,text/plain
-js,text/javascript
+js,application/javascript
 csv,text/csv
 json,application/json
 odin,text/plain
+woff2,font/woff2
+ico,img/x-icon
+

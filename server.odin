@@ -1,5 +1,6 @@
 package http
 
+
 import "core:fmt"
 import "core:net"
 import "core:strings"
@@ -111,6 +112,7 @@ handle_client :: proc(
 
   defer delete_request(request)
 
+  fmt.println(request.method, request.raw_route)
   for handler in s.handlers do handler(&request) or_break
 }
 

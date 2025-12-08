@@ -1,7 +1,5 @@
 package http
 
-import "./html_gen"
-import "./html_gen/tags"
 import "core:fmt"
 import "core:mem"
 import "core:net"
@@ -11,23 +9,23 @@ import "core:strings"
 import "core:time"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
-  if r.route != "/" do return true
+  if r.route != "" do return true
 
   file, err := os.open("index.html")
   if file == os.INVALID_HANDLE || err != nil do return true
   defer os.close(file)
 
-  send_file(r.from, r, file)
+  send_file(r.from, r, file, "index.html")
 
   return false
 }
 
 resolve_file: Request_Handler : proc(r: ^Request) -> bool {
-  file, err := os.open(r.route[1:])
+  file, err := os.open(r.route)
   if file == os.INVALID_HANDLE || err != nil do return true
   defer os.close(file)
 
-  send_file(r.from, r, file)
+  send_file(r.from, r, file, r.route)
 
   return false
 }
@@ -46,9 +44,9 @@ send_404: Request_Handler : proc(r: ^Request) -> bool {
 }
 
 send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
-  if r.route != "/" && !os.is_dir(r.route[1:]) do return true
+  if r.route != "" && !os.is_dir(r.route) do return true
 
-  dir, err := os.open(r.route[1:] if len(r.route) > 1 else ".")
+  dir, err := os.open(r.route if len(r.route) > 1 else ".")
   defer os.close(dir)
   if err != nil do return true
 
@@ -93,7 +91,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
         fmt.sbprintfln(
           &builder,
           "        <td><a href=\"%s/%s\">%[1]s/</a></td>",
-          r.route[1:],
+          r.route,
           f.name,
         )
       } else {
@@ -101,7 +99,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
         fmt.sbprintfln(
           &builder,
           "        <td><a href=\"%s/%s\">%[1]s</a></td>",
-          r.route[1:],
+          r.route,
           f.name,
         )
       }
