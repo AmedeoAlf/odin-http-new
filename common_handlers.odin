@@ -61,22 +61,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
       "HTTP/1.1 200 OK\r\n" +
       "Content-type: text/html\r\n" +
       "\r\n" +
-      "<!DOCTYPE html>\n" +
-      "<html lang=\"en\">\n" +
-      "<head>\n" +
-      "  <meta charset=\"UTF-8\">\n" +
-      "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
-      "<title>Directory listing</title>\n" +
-      "</head>\n" +
-      "<body>\n" +
-      "  <table>\n" +
-      "    <thead>\n" +
-      "      <tr>\n" +
-      "        <th>Size</th>\n" +
-      "        <th>Name</th>\n" +
-      "      </tr>\n" +
-      "    </thead>\n" +
-      "    <tbody>\n",
+      #load("directory_listing_start.html"),
     ),
   )
 
@@ -110,12 +95,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   }
 
 
-  net.send(
-    r.from,
-    transmute([]u8)string(
-      "    </tbody>\n" + "  </table>\n" + "</body>\n" + "</html>",
-    ),
-  )
+  net.send(r.from, #load("directory_listing_end.html"))
 
   return false
 }
