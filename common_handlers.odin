@@ -12,7 +12,7 @@ slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
   if r.route != "" do return true
 
   file, err := os.open("index.html")
-  if file == os.INVALID_HANDLE || err != nil do return true
+  if err != nil do return true
   defer os.close(file)
 
   send_file(r.from, r, file, "index.html")
@@ -22,7 +22,7 @@ slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
 
 resolve_file: Request_Handler : proc(r: ^Request) -> bool {
   file, err := os.open(r.route)
-  if file == os.INVALID_HANDLE || err != nil do return true
+  if err != nil do return true
   defer os.close(file)
 
   send_file(r.from, r, file, r.route)
@@ -50,8 +50,9 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   defer os.close(dir)
   if err != nil do return true
 
-  files, err2 := os.read_dir(dir, 50)
-  defer os.file_info_slice_delete(files)
+  files, err2 := os.read_dir(dir, 50, context.temp_allocator)
+  // defer os.file_info_slice_delete(files)
+  defer free_all(context.temp_allocator)
   if err2 != nil do return true
 
   net.send(
@@ -86,7 +87,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
       strings.builder_reset(&builder)
       fmt.sbprintfln(&builder, "      <tr>")
 
-      if f.is_dir {
+      if f.type == .Directory {
         fmt.sbprintfln(&builder, "        <td>dir</td>")
         fmt.sbprintfln(
           &builder,

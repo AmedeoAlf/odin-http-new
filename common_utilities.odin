@@ -32,11 +32,11 @@ get_filetype :: proc(filename: string) -> (mime: string) {
 send_file :: proc(
   sock: net.TCP_Socket,
   r: ^Request,
-  handle: os.Handle,
+  handle: ^os.File,
   path: string,
 ) {
   _send_file_header(sock, path, handle, r)
-  os.seek(handle, i64(r.range_start), os.SEEK_SET)
+  os.seek(handle, i64(r.range_start), .Start)
 
   if r.range_end != 0 do _stream_file(sock, handle, r.range_end - r.range_start)
   else do _stream_file(sock, handle)
@@ -51,28 +51,31 @@ split_params :: proc(from_route: string) -> (path: string, params: string) {
 _send_file_header :: proc(
   sock: net.TCP_Socket,
   path: string,
-  file: os.Handle,
+  file: ^os.File,
   r: ^Request,
 ) {
   header := strings.builder_make()
   defer strings.builder_destroy(&header)
 
-  file_size := os.file_size_from_path(path)
-
-  if (r.range_start == 0) {
-    fmt.sbprintf(&header, "HTTP/1.1 200 OK\r\n")
-    fmt.sbprintf(&header, "Content-length: %d\r\n", file_size)
+  if file_size, size_err := os.file_size(file); size_err == nil {
+    if (r.range_start == 0) {
+      fmt.sbprintf(&header, "HTTP/1.1 200 OK\r\n")
+      fmt.sbprintf(&header, "Content-length: %d\r\n", file_size)
+    } else {
+      end := r.range_end if r.range_end != 0 else int(file_size)
+      fmt.sbprintf(&header, "HTTP/1.1 206 Partial\r\n")
+      fmt.sbprintf(
+        &header,
+        "Content-range: bytes %d-%d/%d\r\n",
+        r.range_start,
+        end,
+        file_size,
+      )
+      fmt.sbprintf(&header, "Content-length: %d\r\n", end - r.range_start)
+    }
   } else {
-    end := r.range_end if r.range_end != 0 else int(file_size)
-    fmt.sbprintf(&header, "HTTP/1.1 206 Partial\r\n")
-    fmt.sbprintf(
-      &header,
-      "Content-range: bytes %d-%d/%d\r\n",
-      r.range_start,
-      end,
-      file_size,
-    )
-    fmt.sbprintf(&header, "Content-length: %d\r\n", end - r.range_start)
+    fmt.println("Couldn't read size of file", file)
+    fmt.sbprintf(&header, "HTTP/1.1 200 OK\r\n")
   }
   fmt.sbprintf(&header, "Content-type: %s\r\n", get_filetype(path))
   fmt.sbprintf(&header, "Accept-ranges: bytes\r\n")
@@ -85,7 +88,7 @@ _send_file_header :: proc(
 }
 
 // TODO: handle errors in some capacity
-_stream_file :: proc(sock: net.TCP_Socket, file: os.Handle, size_limit := -1) {
+_stream_file :: proc(sock: net.TCP_Socket, file: ^os.File, size_limit := -1) {
   buf: [4096]byte
 
   read, read_err := os.read(file, buf[:])
