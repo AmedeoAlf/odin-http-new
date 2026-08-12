@@ -57,6 +57,16 @@ _read_line :: proc(
   line: mo.Maybe_Owned(string),
   err: net.TCP_Recv_Error,
 ) {
+  // Optimization that prevents an otherwise forced heap allocation on first line
+  if reader.valid_until == 0 {
+    read, err := net.recv_tcp(reader.sock, reader.data[:])
+    if err != nil {
+      return mo.Unowned(""), err
+    }
+    reader.next_b = 0
+    reader.valid_until = read
+  }
+
   // 1. check available bytes in buffer
   data := reader.data[reader.next_b:reader.valid_until]
   found := strings.index(string(data), delim)
