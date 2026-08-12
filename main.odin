@@ -10,6 +10,12 @@ main :: proc() {
   load_mime_types_from_csv(#load("filetypes.csv"))
   make_and_run_forever(
     addr,
-    {slash_as_index_html, send_directory_listing, resolve_file, send_404},
+    {
+      slash_as_index_html,
+      upload_file,
+      send_directory_listing,
+      resolve_file,
+      send_404,
+    },
   )
 }

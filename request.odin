@@ -1,5 +1,6 @@
 package http
 
+import "core:fmt"
 import "core:net"
 import "core:reflect"
 import "core:strconv"
@@ -67,36 +68,45 @@ fill_first_line_data :: proc(into: ^Request, line: string) -> (ok: bool) {
   return true
 }
 
-// Returns the last incomplete line
+
+// Returns the start of the next line that needs to be parsed
+// If the next line is empty (=the next bytes are "\r\n"), then the body has started
 parse_headers :: proc(r: ^Request, from := 0) -> int {
-  if from == -1 do return -1
+  iter := string(r.raw)[from:]
+  body_start := strings.index(iter, "\r\n\r\n")
+  last_line_end :=
+    strings.last_index(iter, "\r\n") if body_start == -1 else body_start
 
-  lines := strings.split_lines(string(r.raw)[from:])
-  defer delete(lines)
+  if last_line_end == -1 do return from
+  iter = iter[:last_line_end]
+  fmt.println("parsing from <", iter, ">")
 
-  for line in lines {
-    if line == "" do return -1
-    RANGE_TEXT :: "Range: bytes="
-    CONTENT_LENGTH_TEXT :: "Content-Length: "
-    switch {
-    case strings.starts_with(line, RANGE_TEXT):
-      {
-        start_end := line[len(RANGE_TEXT):] // ex. "100-1024"
-        separator_position := strings.index_byte(start_end, '-')
-        r.range_start =
-          strconv.parse_int(start_end[:separator_position]) or_else 0
-        r.range_end =
-          strconv.parse_int(start_end[separator_position + 1:]) or_else 0
-      }
-    case strings.starts_with(line, CONTENT_LENGTH_TEXT):
-      {
-        r.content_length =
-          strconv.parse_int(line[len(CONTENT_LENGTH_TEXT):]) or_else 0
-      }
-    }
+  for line in strings.split_lines_iterator(&iter) {
+    parse_header_line(r, line)
   }
 
-  return strings.last_index(string(r.raw), "\r\n") + 2
+  return last_line_end + 2
+}
+
+parse_header_line :: proc(r: ^Request, line: string) {
+  RANGE_TEXT :: "Range: bytes="
+  CONTENT_LENGTH_TEXT :: "Content-Length: "
+  switch {
+  case strings.starts_with(line, RANGE_TEXT):
+    {
+      start_end := line[len(RANGE_TEXT):] // ex. "100-1024"
+      separator_position := strings.index_byte(start_end, '-')
+      r.range_start =
+        strconv.parse_int(start_end[:separator_position]) or_else 0
+      r.range_end =
+        strconv.parse_int(start_end[separator_position + 1:]) or_else 0
+    }
+  case strings.starts_with(line, CONTENT_LENGTH_TEXT):
+    {
+      r.content_length =
+        strconv.parse_int(line[len(CONTENT_LENGTH_TEXT):]) or_else 0
+    }
+  }
 }
 
 delete_request :: proc(r: Request) {

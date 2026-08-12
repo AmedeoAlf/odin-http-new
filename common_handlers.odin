@@ -9,7 +9,7 @@ import "core:strings"
 import "core:time"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
-  if r.route != "" do return true
+  if r.route != "" || r.method != .GET do return true
 
   file, err := os.open("index.html")
   if err != nil do return true
@@ -21,6 +21,8 @@ slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
 }
 
 resolve_file: Request_Handler : proc(r: ^Request) -> bool {
+  if r.method != .GET do return true
+
   file, err := os.open(r.route)
   if err != nil do return true
   defer os.close(file)
@@ -44,7 +46,7 @@ send_404: Request_Handler : proc(r: ^Request) -> bool {
 }
 
 send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
-  if r.route != "" && !os.is_dir(r.route) do return true
+  if r.route != "" && !os.is_dir(r.route) || r.method != .GET do return true
 
   dir, err := os.open(r.route if len(r.route) > 1 else ".")
   defer os.close(dir)
@@ -96,6 +98,15 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 
 
   net.send(r.from, #load("directory_listing_end.html"))
+
+  return false
+}
+
+upload_file: Request_Handler : proc(r: ^Request) -> bool {
+  if r.method != .PUT do return true
+
+  fmt.println(string(r.raw))
+  fmt.println("uploaded to '", r.route, "',", len(r.body), "bytes\n")
 
   return false
 }

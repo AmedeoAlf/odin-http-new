@@ -8,7 +8,18 @@
 </head>
 
 <body>
-  <p>Upload <input type="file" id="input" multiple /></p>
+  <form method="dialog" id="uploadForm">
+    <input type="file" id="fileInput" multiple />
+    <input type="submit" name="send" value="Upload">
+  </form>
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    document.getElementById("uploadForm").onsubmit =
+      () => [...fileInput.files].forEach(it => fetch("", {
+        body: it,
+        method: "PUT"
+      }));
+  </script>
   <table>
     <thead>
       <tr>
