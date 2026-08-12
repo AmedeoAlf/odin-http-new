@@ -5,6 +5,7 @@ import "core:net"
 import "core:reflect"
 import "core:strconv"
 import "core:strings"
+import "tcp_reader"
 
 Http_Version :: enum {
   HTTP1,
@@ -30,7 +31,7 @@ Request :: struct {
   content_length:         int,
   raw:                    []u8,
   body:                   []u8,
-  from:                   Tcp_Reader,
+  from:                   tcp_reader.Reader,
   from_addr:              net.Endpoint,
 }
 
