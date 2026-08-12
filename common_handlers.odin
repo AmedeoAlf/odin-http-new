@@ -7,6 +7,7 @@ import "core:os"
 import "core:path/filepath"
 import "core:strings"
 import "core:time"
+import "tcp_reader"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
   if r.route != "" || r.method != .GET do return true
@@ -105,7 +106,64 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 upload_file: Request_Handler : proc(r: ^Request) -> bool {
   if r.method != .PUT do return true
 
-  fmt.println("uploaded to '", r.route, "',", "bytes\n")
+  filename := r.route if r.route != "" else "upload"
+
+  if os.exists(filename) {
+    net.send(
+      r.from.sock,
+      transmute([]u8)string(
+        "HTTP/1.1 409 Conflict\r\n" +
+        "Content-type: text/plain\r\n" +
+        "\r\n" +
+        "The file already exists\r\n",
+      ),
+    )
+    return false
+  }
+
+  fd, err := os.open(filename, {.Write, .Create})
+  defer os.close(fd)
+  if err != nil {
+    str := fmt.tprintfln(
+      "HTTP/1.1 500 Internal Server Error\r\n" +
+      "Content-type: text/plain\r\n" +
+      "\r\n" +
+      "Encountered an error while creating file: {}\r\n",
+      err,
+    )
+    net.send(r.from.sock, transmute([]u8)(str))
+    return false
+  }
+
+  total_read := 0
+  for total_read < r.content_length {
+    buf, tcp_err := tcp_reader.empty_buffer(&r.from)
+    if tcp_err != .None {
+      os.remove(filename)
+      return false
+    }
+    total_read += len(buf)
+    if written, err := os.write(fd, buf); err != nil {
+      str := fmt.tprintfln(
+        "HTTP/1.1 500 Internal Server Error\r\n" +
+        "Content-type: text/plain\r\n" +
+        "\r\n" +
+        "Encountered an error while writing file: {}\r\n",
+        err,
+      )
+      net.send(r.from.sock, transmute([]u8)(str))
+      return false
+    }
+  }
+
+  str := fmt.tprintfln(
+    "HTTP/1.1 201 Created\r\n" +
+    "Content-type: text/plain\r\n" +
+    "\r\n" +
+    "File created successfully\r\n",
+    err,
+  )
+  net.send(r.from.sock, transmute([]u8)(str))
 
   return false
 }
