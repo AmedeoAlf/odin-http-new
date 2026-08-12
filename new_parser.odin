@@ -31,6 +31,8 @@ handle_client :: proc(
   }
   mo.delete(line)
 
+  fmt.printfln("{} {}", request.method, request.raw_route)
+
   line, err = tcp_reader.read_line(reader)
   for err == nil && line.elem != "" {
     parse_header_line(&request, line.elem)
