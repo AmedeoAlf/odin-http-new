@@ -15,10 +15,13 @@
   <script>
     const fileInput = document.getElementById("fileInput");
     document.getElementById("uploadForm").onsubmit =
-      () => [...fileInput.files].forEach(it => fetch(it.name, {
-        body: it,
-        method: "PUT"
-      }));
+      () => Promise
+        .allSettled(
+          [...fileInput.files].map(it => fetch(it.name, {
+            body: it,
+            method: "PUT"
+          })))
+        .then(() => window.location.reload());
   </script>
   <table>
     <thead>
