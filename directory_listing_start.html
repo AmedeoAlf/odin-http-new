@@ -15,7 +15,7 @@
   <script>
     const fileInput = document.getElementById("fileInput");
     document.getElementById("uploadForm").onsubmit =
-      () => [...fileInput.files].forEach(it => fetch("", {
+      () => [...fileInput.files].forEach(it => fetch(it.name, {
         body: it,
         method: "PUT"
       }));
