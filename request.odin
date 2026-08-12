@@ -29,8 +29,6 @@ Request :: struct {
   version:                Http_Version,
   range_start, range_end: int,
   content_length:         int,
-  raw:                    []u8,
-  body:                   []u8,
   from:                   tcp_reader.Reader,
   from_addr:              net.Endpoint,
 }
@@ -69,25 +67,6 @@ fill_first_line_data :: proc(into: ^Request, line: string) -> (ok: bool) {
   return true
 }
 
-
-// Returns the start of the next line that needs to be parsed
-// If the next line is empty (=the next bytes are "\r\n"), then the body has started
-parse_headers :: proc(r: ^Request, from := 0) -> int {
-  iter := string(r.raw)[from:]
-  body_start := strings.index(iter, "\r\n\r\n")
-  last_line_end :=
-    strings.last_index(iter, "\r\n") if body_start == -1 else body_start
-
-  if last_line_end == -1 do return from
-  iter = iter[:last_line_end]
-  fmt.println("parsing from <", iter, ">")
-
-  for line in strings.split_lines_iterator(&iter) {
-    parse_header_line(r, line)
-  }
-
-  return last_line_end + 2
-}
 
 parse_header_line :: proc(r: ^Request, line: string) {
   RANGE_TEXT :: "Range: bytes="

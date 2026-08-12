@@ -105,8 +105,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
 upload_file: Request_Handler : proc(r: ^Request) -> bool {
   if r.method != .PUT do return true
 
-  fmt.println(string(r.raw))
-  fmt.println("uploaded to '", r.route, "',", len(r.body), "bytes\n")
+  fmt.println("uploaded to '", r.route, "',", "bytes\n")
 
   return false
 }
