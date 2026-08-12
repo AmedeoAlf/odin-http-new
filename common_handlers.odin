@@ -142,6 +142,12 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
       os.remove(filename)
       return false
     }
+    fmt.printf(
+      "Receiving {} ({:M}) {: 3d}%%\r",
+      filename,
+      r.content_length,
+      (total_read * 100 / r.content_length),
+    )
     total_read += len(buf)
     if written, err := os.write(fd, buf); err != nil {
       str := fmt.tprintfln(
@@ -155,6 +161,8 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
       return false
     }
   }
+
+  fmt.printfln("Finished receiving {} ({:M})", filename, r.content_length)
 
   str := fmt.tprintfln(
     "HTTP/1.1 201 Created\r\n" +
