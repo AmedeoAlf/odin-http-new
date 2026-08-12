@@ -59,7 +59,6 @@ _read_line :: proc(
 ) {
   // 1. check available bytes in buffer
   data := reader.data[reader.next_b:reader.valid_until]
-  // found := strings.index(string(data), delim)
   found := strings.index(string(data), delim)
   if found != -1 {
     line = mo.Unowned(string(data[:found]))
