@@ -89,3 +89,18 @@ empty_buffer :: proc(
 
   return
 }
+
+read :: proc(
+  reader: ^Reader,
+  out: []byte,
+) -> (
+  n: int,
+  err: net.TCP_Recv_Error,
+) {
+  n = min(reader.valid_until - reader.next_b, len(out))
+  copy(out[:], reader.data[reader.next_b:reader.valid_until])
+  if n < len(out) {
+    n += net.recv_tcp(reader.sock, out[n:]) or_return
+  }
+  return
+}
