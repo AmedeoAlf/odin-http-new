@@ -30,7 +30,7 @@ Request :: struct {
   content_length:         int,
   raw:                    []u8,
   body:                   []u8,
-  from:                   net.TCP_Socket,
+  from:                   Tcp_Reader,
   from_addr:              net.Endpoint,
 }
 

@@ -15,7 +15,7 @@ slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
   if err != nil do return true
   defer os.close(file)
 
-  send_file(r.from, r, file, "index.html")
+  send_file(r.from.sock, r, file, "index.html")
 
   return false
 }
@@ -27,14 +27,14 @@ resolve_file: Request_Handler : proc(r: ^Request) -> bool {
   if err != nil do return true
   defer os.close(file)
 
-  send_file(r.from, r, file, r.route)
+  send_file(r.from.sock, r, file, r.route)
 
   return false
 }
 
 send_404: Request_Handler : proc(r: ^Request) -> bool {
   net.send(
-    r.from,
+    r.from.sock,
     transmute([]u8)string(
       "HTTP/1.1 404 Not Found\r\n" +
       "Content-type: text/plain\r\n" +
@@ -58,7 +58,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   if err2 != nil do return true
 
   net.send(
-    r.from,
+    r.from.sock,
     transmute([]u8)string(
       "HTTP/1.1 200 OK\r\n" +
       "Content-type: text/html\r\n" +
@@ -92,12 +92,12 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
         )
       }
       fmt.sbprintfln(&builder, "      </tr>")
-      net.send(r.from, builder.buf[:])
+      net.send(r.from.sock, builder.buf[:])
     }
   }
 
 
-  net.send(r.from, #load("directory_listing_end.html"))
+  net.send(r.from.sock, #load("directory_listing_end.html"))
 
   return false
 }
