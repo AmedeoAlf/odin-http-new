@@ -12,16 +12,50 @@
     <input type="file" id="fileInput" multiple />
     <input type="submit" name="send" value="Upload">
   </form>
+  <div id="progressBarContainer"></div>
   <script>
+    const el = (type, ...children) => {
+      const e = document.createElement(type);
+      e.append(...children);
+      return e;
+    }
+    const elProps = (type, props, ...children) => {
+      const e = document.createElement(type);
+      for (const p in props) e[p] = props[p];
+      e.append(...children);
+      return e;
+    }
     const fileInput = document.getElementById("fileInput");
+    const progressBarContainer = document.getElementById("progressBarContainer");
     document.getElementById("uploadForm").onsubmit =
-      () => Promise
-        .allSettled(
-          [...fileInput.files].map(it => fetch(it.name, {
-            body: it,
-            method: "PUT"
-          })))
-        .then(() => window.location.reload());
+      () => Promise.allSettled(
+        [...fileInput.files].map(file =>
+          new Promise((resolve) => {
+            const progressEl = el(
+              "progress",
+            );
+            const myProgressBar = el("p", el("label", `Uploading ${file.name}`, progressEl));
+
+            const req = new XMLHttpRequest();
+            req.upload.onloadstart = (ev) => {
+              progressEl.value = ev.loaded;
+              progressEl.max = ev.total;
+              progressBarContainer.append(myProgressBar);
+            }
+            req.upload.onprogress = (ev) => {
+              console.assert(ev.lengthComputable);
+              progressEl.value = ev.loaded;
+              progressEl.max = ev.total;
+            }
+            req.upload.onloadend = (ev) => {
+              myProgressBar.remove();
+              resolve();
+            }
+            req.open("PUT", file.name, true);
+            req.send(file)
+          })
+        )
+      ).then(() => window.location.reload())
   </script>
   <table>
     <thead>
