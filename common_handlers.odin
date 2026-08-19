@@ -53,7 +53,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   defer os.close(dir)
   if err != nil do return true
 
-  files, err2 := os.read_dir(dir, 50, context.temp_allocator)
+  files, err2 := os.read_all_directory(dir, context.temp_allocator)
   // defer os.file_info_slice_delete(files)
   defer free_all(context.temp_allocator)
   if err2 != nil do return true
