@@ -5,7 +5,10 @@ import "core:net"
 
 main :: proc() {
   addr := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, 3500}
-  fmt.println("Serving on http://", net.endpoint_to_string(addr), sep = "")
+  for ip in get_ips() {
+    fmt.printfln("Serving on http://{}:3500 ({})", ip.addr, ip.ifname)
+  }
+  free_all(context.temp_allocator)
 
   load_mime_types_from_csv(#load("filetypes.csv"))
   make_and_run_forever(

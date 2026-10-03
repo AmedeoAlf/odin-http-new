@@ -2,39 +2,49 @@
 package http
 
 import "core:c"
-import "core:fmt"
 import "core:net"
+import "core:strings"
 import "core:sys/linux"
 foreign import libc "system:c"
 
 @(private)
-print_ips :: proc() {
+Ip :: struct {
+  addr:   string,
+  ifname: string,
+}
+
+@(private)
+get_ips :: proc(allocator := context.temp_allocator) -> []Ip {
   // addrs, err := net.enumerate_interfaces()
   // fmt.println(addrs, err)
   ifaddrs: ^ifaddrs
   ifaddrs_err := getifaddrs(&ifaddrs)
-  if ifaddrs_err != .NONE do return
+  if ifaddrs_err != .NONE do return nil
   defer freeifaddrs(ifaddrs)
 
+  ips := make([dynamic]Ip, allocator)
   for curr := ifaddrs; curr != nil; curr = curr.ifa_next {
     (.IFF_UP in curr.ifa_flags) or_continue
     (.IFF_LOOPBACK not_in curr.ifa_flags) or_continue
-    addr: string
+    ip: Ip
     #partial switch curr.ifa_addr.sa_family {
     case .INET:
-      addr = net.address_to_string(
+      ip.addr = net.address_to_string(
         net.IP4_Address(static_slice(&curr.ifa_addr.sa_data, 2, 6)),
+        allocator,
       )
     case .INET6:
-      addr = net.address_to_string(
+      ip.addr = net.address_to_string(
         net.IP6_Address(static_slice(&curr.ifa_addr.sa_data, 2, 10)),
+        allocator,
       )
     case:
       continue
     }
-    fmt.printfln("{} -> {}", addr, curr.ifa_name)
+    ip.ifname = strings.clone_from_cstring(curr.ifa_name, allocator)
+    append(&ips, ip)
   }
-  free_all(context.temp_allocator)
+  return ips[:]
 }
 
 sockaddr :: struct {}

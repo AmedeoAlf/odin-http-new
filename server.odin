@@ -2,7 +2,6 @@ package http
 
 import "core:fmt"
 import "core:net"
-import "core:strings"
 import "core:thread"
 
 MULTITHREADED :: #config(MT, true)
@@ -57,7 +56,6 @@ make_and_run_forever :: proc(
   interface: net.Endpoint,
   handlers := []Request_Handler{},
 ) -> net.Network_Error {
-  print_ips()
   run_forever(make_server(interface, handlers) or_return)
   return nil
 }
