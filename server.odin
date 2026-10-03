@@ -26,6 +26,7 @@ make_server :: proc(
   err: net.Network_Error,
 ) {
   sock, listen_err := net.listen_tcp(interface)
+  net.set_blocking(sock, true)
   return {sock, handlers}, listen_err
 }
 
