@@ -5,11 +5,6 @@ import "core:net"
 import "core:thread"
 
 MULTITHREADED :: #config(MT, true)
-MAX_REQUEST_BYTES :: #config(
-  MAX_REQUEST_SIZE,
-  1 << 20,
-  /* 1MB */
-)
 
 Request_Handler :: proc(request: ^Request) -> bool
 
