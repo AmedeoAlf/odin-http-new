@@ -14,17 +14,26 @@
   </form>
   <div id="progressBarContainer"></div>
   <script>
+    const toBytesDisplay = (bytecount) => {
+      const UNITS = ['B/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s']
+      for (const suffix of UNITS) {
+        if (bytecount < 1000)
+          return `${bytecount.toPrecision(3)} ${suffix}`;
+        bytecount /= 1000;
+      }
+      return bytecount;
+    };
     const el = (type, ...children) => {
       const e = document.createElement(type);
       e.append(...children);
       return e;
-    }
+    };
     const elProps = (type, props, ...children) => {
       const e = document.createElement(type);
       for (const p in props) e[p] = props[p];
       e.append(...children);
       return e;
-    }
+    };
     const fileInput = document.getElementById("fileInput");
     const progressBarContainer = document.getElementById("progressBarContainer");
     document.getElementById("uploadForm").onsubmit =
@@ -34,23 +43,33 @@
             const progressEl = el(
               "progress",
             );
-            const myProgressBar = el("p", el("label", `Uploading ${file.name}`, progressEl));
+            const speedText = el("p", "(...)")
+            const myProgressBar = el("p", el("label", `Uploading ${file.name}`, speedText, progressEl));
 
             const req = new XMLHttpRequest();
             req.upload.onloadstart = (ev) => {
               progressEl.value = ev.loaded;
               progressEl.max = ev.total;
               progressBarContainer.append(myProgressBar);
-            }
+            };
+
+            let lastProgressEventTimestamp = Date.now()
+            let lastProgressEventBytes = 0
             req.upload.onprogress = (ev) => {
               console.assert(ev.lengthComputable);
               progressEl.value = ev.loaded;
               progressEl.max = ev.total;
-            }
+
+              const now = Date.now();
+              const speed = (ev.loaded - lastProgressEventBytes) / (now - lastProgressEventTimestamp) * 1000;
+              speedText.textContent = `(${toBytesDisplay(speed)})`
+              lastProgressEventTimestamp = now;
+              lastProgressEventBytes = ev.loaded;
+            };
             req.upload.onloadend = (ev) => {
               myProgressBar.remove();
               resolve();
-            }
+            };
             req.open("PUT", file.name, true);
             req.send(file)
           })
