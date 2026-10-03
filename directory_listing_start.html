@@ -70,6 +70,11 @@
               myProgressBar.remove();
               resolve();
             };
+            req.onloadend = () => {
+              if (req.status >= 300) alert(req.responseText);
+              myProgressBar.remove();
+              resolve();
+            };
             req.open("PUT", file.name, true);
             req.send(file)
           })
