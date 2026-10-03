@@ -3,7 +3,6 @@ package http
 import "core:fmt"
 import "core:net"
 import "core:thread"
-import "core:time"
 
 MULTITHREADED :: #config(MT, true)
 MAX_REQUEST_BYTES :: #config(
@@ -27,7 +26,6 @@ make_server :: proc(
   err: net.Network_Error,
 ) {
   sock, listen_err := net.listen_tcp(interface)
-  net.set_option(sock, .Receive_Timeout, time.Second * 5)
   return {sock, handlers}, listen_err
 }
 
