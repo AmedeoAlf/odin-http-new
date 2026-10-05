@@ -113,3 +113,19 @@ _stream_file :: proc(sock: net.TCP_Socket, file: ^os.File, size_limit := -1) {
   //   log(.ERROR, read_err, "in read()")
   // }
 }
+
+send_error :: proc(
+  sock: net.TCP_Socket,
+  message_fmt: string,
+  args: ..any,
+  code: int = 500,
+  msg: string = "Internal Server Error",
+) {
+  response_fmt := fmt.tprintfln(
+    "HTTP/1.1 {} {}\r\nContent-type: text/plain\r\n\r\n{}",
+    code,
+    msg,
+    message_fmt,
+  )
+  net.send(sock, transmute([]u8)(fmt.tprintfln(response_fmt, ..args)))
+}

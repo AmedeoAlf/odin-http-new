@@ -1,12 +1,10 @@
 package http
 
 import "core:fmt"
-import "core:mem"
 import "core:net"
 import "core:os"
-import "core:path/filepath"
 import "core:strings"
-import "core:time"
+import "core:sys/linux"
 import "tcp_reader"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
@@ -135,13 +133,40 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
     return false
   }
 
+  send_fn ::
+    linux_recv_file when false &&
+    ODIN_OS == .Linux else multiplatform_recv_file
+
+  if !send_fn(r, fd, filename) {
+    os.remove(filename)
+    fmt.printfln("could not finish writing files")
+    return false
+  }
+
+  fmt.printfln("Finished receiving {} ({:M})", filename, r.content_length)
+
+  str := fmt.tprintfln(
+    "HTTP/1.1 201 Created\r\n" +
+    "Content-type: text/plain\r\n" +
+    "\r\n" +
+    "File created successfully\r\n",
+    err,
+  )
+  net.send(r.from.sock, transmute([]u8)(str))
+
+  return false
+}
+
+@(private = "file")
+multiplatform_recv_file :: proc(
+  r: ^Request,
+  fd: ^os.File,
+  filename: string,
+) -> bool {
   total_read := 0
   for total_read < r.content_length {
     buf, tcp_err := tcp_reader.empty_buffer(&r.from)
-    if tcp_err != .None {
-      os.remove(filename)
-      return false
-    }
+    if tcp_err != .None do return false
     fmt.printf(
       "Receiving {} ({:M}) {: 3d}%%\r",
       filename,
@@ -161,17 +186,101 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
       return false
     }
   }
+  return true
+}
 
-  fmt.printfln("Finished receiving {} ({:M})", filename, r.content_length)
+@(private = "file")
+linux_recv_file :: proc(r: ^Request, fd: ^os.File, filename: string) -> bool {
+  total_read := 0
 
-  str := fmt.tprintfln(
-    "HTTP/1.1 201 Created\r\n" +
-    "Content-type: text/plain\r\n" +
-    "\r\n" +
-    "File created successfully\r\n",
-    err,
+  // dump remaining buffered data
+  buf, tcp_err := tcp_reader.empty_buffer(&r.from)
+  if tcp_err != .None {
+    os.remove(filename)
+    return false
+  }
+  fmt.printf(
+    "Receiving {} ({:M}) {: 3d}%%\r",
+    filename,
+    r.content_length,
+    (total_read * 100 / r.content_length),
   )
-  net.send(r.from.sock, transmute([]u8)(str))
+  total_read += len(buf)
+  if written, err := os.write(fd, buf); err != nil {
+    send_error(
+      r.from.sock,
+      "Encountered an error while writing file: {}\r\n",
+      err,
+    )
+    return false
+  }
 
-  return false
+  // begin splicing
+  pipes: [2]linux.Fd
+  if pipes_err := linux.pipe2(&pipes, {}); pipes_err != .NONE {
+    send_error(r.from.sock, "Could not create pipes")
+    return false
+  }
+
+  fd_out := linux.Fd(os.fd(fd))
+  fd_in := linux.Fd(r.from.sock)
+  bytes_in_pipe: uint = 0
+  // TODO: EINTR/EAGAIN should trigger a retry
+  for total_read < r.content_length {
+    written, err := linux.splice(
+      fd_in,
+      nil,
+      pipes[0],
+      nil,
+      uint(r.content_length - total_read),
+      {.MOVE, .MORE},
+    )
+    if err != .NONE {
+      send_error(
+        r.from.sock,
+        "{} while splicing to pipe ({} total bytes)",
+        err,
+        total_read,
+      )
+      return false
+    }
+    bytes_in_pipe += uint(written)
+
+    written, err = linux.splice(
+      pipes[0],
+      nil,
+      fd_out,
+      nil,
+      bytes_in_pipe,
+      {.MOVE, .MORE},
+    )
+    if err != .NONE {
+      send_error(
+        r.from.sock,
+        "{} while splicing from pipe ({} total bytes)",
+        err,
+        total_read,
+      )
+      return false
+    }
+    total_read += written
+    bytes_in_pipe -= uint(written)
+  }
+  if written, err := linux.splice(
+    fd_in,
+    nil,
+    fd_out,
+    nil,
+    uint(r.content_length - total_read),
+    {.MOVE},
+  ); err != nil || written != r.content_length - total_read {
+    send_error(
+      r.from.sock,
+      "Encountered an error while splicing file: {}\r\n",
+      err,
+    )
+    return false
+  }
+
+  return true
 }
