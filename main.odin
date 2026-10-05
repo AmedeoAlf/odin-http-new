@@ -11,7 +11,7 @@ main :: proc() {
   free_all(context.temp_allocator)
 
   load_mime_types_from_csv(#load("filetypes.csv"))
-  make_and_run_forever(
+  if err := make_and_run_forever(
     addr,
     {
       slash_as_index_html,
@@ -20,5 +20,7 @@ main :: proc() {
       resolve_file,
       send_404,
     },
-  )
+  ); err != nil {
+    fmt.eprintln("fail with error", err)
+  }
 }
