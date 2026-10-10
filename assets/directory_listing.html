@@ -5,12 +5,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Directory listing</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #2B1315;
+      color: #F3E3E4;
+      display: flex;
+      min-height: 90dvh;
+      max-width: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      gap: 5px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input[type=submit] {
+      background-color: #AB4950;
+      width: 100%;
+      padding: 1em;
+      border-radius: 1em;
+      color: #F3E3E4;
+      font-size: 1em;
+      border: none;
+      box-shadow: 0 4px 6px -1px #632C30, 0 2px 4px -2px #2B1315;
+      transition: all 0.2s;
+      font-weight: 800;
+    }
+
+    input[type=submit]:hover {
+      transform: translateY(2px);
+    }
+
+    input[type=submit]:active {
+      background-color: #632C30;
+    }
+
+    table {
+      background-color: #402d2e;
+      border-collapse: collapse;
+      min-width: 100%;
+    }
+
+    #table-wrap {
+      width: 100%;
+      max-width: 600px;
+      border: 1pt solid #FADF63;
+      border-radius: 1em;
+      overflow: scroll;
+      box-shadow: 0 4px 6px -1px #632C30, 0 2px 4px -2px #2B1315;
+    }
+
+    th {
+      font-weight: bolder;
+      background-color: #FADF63;
+      color: black;
+    }
+
+    th,
+    td {
+      padding: 0.5em;
+    }
+
+    td:nth-child(1) {
+      text-align: center;
+      min-width: max-content;
+      width: 50px;
+      border-right: 1px solid #FADF63;
+    }
+
+    a {
+      color: #FBE688;
+    }
+  </style>
 </head>
 
 <body>
   <form method="dialog" id="uploadForm">
     <input type="file" id="fileInput" multiple />
-    <input type="submit" name="send" value="Upload">
+    <input type="submit" name="send" value="upload">
   </form>
   <div id="progressBarContainer"></div>
   <script>
@@ -81,17 +160,19 @@
         )
       ).then(() => window.location.reload())
   </script>
-  <table>
-    <thead>
-      <tr>
-        <th>Size</th>
-        <th>Name</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?TEMPLATE?>
-    </tbody>
-  </table>
+  <div id="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?TEMPLATE?>
+      </tbody>
+    </table>
+  </div>
 </body>
 
 </html>
