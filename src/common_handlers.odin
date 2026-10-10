@@ -85,7 +85,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
         fmt.sbprintfln(&builder, "        <td>%M</td>", f.size)
         fmt.sbprintfln(
           &builder,
-          "        <td><a href=\"%s/%s\">%[1]s</a></td>",
+          "        <td><a href=\"/%s/%s\">%[1]s</a></td>",
           r.route,
           f.name,
         )
