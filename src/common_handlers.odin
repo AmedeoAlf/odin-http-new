@@ -62,7 +62,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
       "HTTP/1.1 200 OK\r\n" +
       "Content-type: text/html\r\n" +
       "\r\n" +
-      #load("directory_listing_start.html"),
+      #load("../build/directory_listing_start.html"),
     ),
   )
 
@@ -96,7 +96,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   }
 
 
-  net.send(r.from.sock, #load("directory_listing_end.html"))
+  net.send(r.from.sock, #load("../build/directory_listing_end.html"))
 
   return false
 }

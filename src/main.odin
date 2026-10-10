@@ -10,7 +10,7 @@ main :: proc() {
   }
   free_all(context.temp_allocator)
 
-  load_mime_types_from_csv(#load("filetypes.csv"))
+  load_mime_types_from_csv(#load("../assets/filetypes.csv"))
   if err := make_and_run_forever(
     addr,
     {
