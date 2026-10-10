@@ -75,7 +75,7 @@
               myProgressBar.remove();
               resolve();
             };
-            req.open("PUT", file.name, true);
+            req.open("PUT", window.location.pathname + "/" + file.name, true);
             req.send(file)
           })
         )
