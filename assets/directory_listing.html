@@ -150,15 +150,25 @@
               resolve();
             };
             req.onloadend = () => {
-              if (req.status >= 300) alert(req.responseText);
               myProgressBar.remove();
-              resolve();
+              resolve(
+                req.status >= 300
+                  ? `${file.name} -> ${req.responseText.trim()}`
+                  : undefined
+              );
             };
             req.open("PUT", window.location.pathname + "/" + file.name, true);
             req.send(file)
           })
         )
-      ).then(() => window.location.reload())
+      ).then((responses) => {
+        responses = responses.flatMap(it => it.value ? [it.value] : [])
+        if (responses.length > 0) alert(
+          "Some files failed:\n" +
+          responses.map(r => `${r}`).join(",\n")
+        );
+        window.location.reload()
+      })
   </script>
   <div id="table-wrap">
     <table>
