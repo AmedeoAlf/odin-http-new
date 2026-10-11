@@ -2,6 +2,7 @@ package http
 
 import "core:fmt"
 import "core:net"
+import "printer"
 
 main :: proc() {
   addr := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, 3500}
@@ -10,6 +11,8 @@ main :: proc() {
   }
   free_all(context.temp_allocator)
 
+  printer._printer_test()
+  printer.println("hello????")
   load_mime_types_from_csv(#load("../assets/filetypes.csv"))
   if err := make_and_run_forever(
     addr,
