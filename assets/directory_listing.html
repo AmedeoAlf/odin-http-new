@@ -122,7 +122,7 @@
             const progressEl = el(
               "progress",
             );
-            const speedText = el("p", "(...)")
+            const speedText = el("p", "(...)");
             const myProgressBar = el("p", el("label", `Uploading ${file.name}`, speedText, progressEl));
 
             const req = new XMLHttpRequest();
@@ -132,8 +132,8 @@
               progressBarContainer.append(myProgressBar);
             };
 
-            let lastProgressEventTimestamp = Date.now()
-            let lastProgressEventBytes = 0
+            let lastProgressEventTimestamp = Date.now();
+            let lastProgressEventBytes = 0;
             req.upload.onprogress = (ev) => {
               console.assert(ev.lengthComputable);
               progressEl.value = ev.loaded;
@@ -158,11 +158,11 @@
               );
             };
             req.open("PUT", window.location.pathname + "/" + file.name, true);
-            req.send(file)
+            req.send(file);
           })
         )
       ).then((responses) => {
-        responses = responses.flatMap(it => it.value ? [it.value] : [])
+        responses = responses.flatMap(it => it.value ? [it.value] : []);
         if (responses.length > 0) alert(
           "Some files failed:\n" +
           responses.map(r => `${r}`).join(",\n")
