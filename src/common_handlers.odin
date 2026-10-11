@@ -5,6 +5,7 @@ import "core:net"
 import "core:os"
 import "core:strings"
 import "core:sys/linux"
+import "printer"
 import "tcp_reader"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
@@ -140,7 +141,7 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
     return false
   }
 
-  fmt.printfln("Finished receiving {} ({:M})", filename, r.content_length)
+  printer.printfln("Finished receiving {} ({:M})", filename, r.content_length)
 
   str := fmt.tprintfln(
     "HTTP/1.1 201 Created\r\n" +
@@ -171,7 +172,7 @@ multiplatform_recv_file :: proc(
       )
       return false
     }
-    fmt.printf(
+    printer.printf(
       "Receiving {} ({:M}) {: 3d}%%\r",
       filename,
       r.content_length,
@@ -201,7 +202,7 @@ linux_recv_file :: proc(r: ^Request, fd: ^os.File, filename: string) -> bool {
     os.remove(filename)
     return false
   }
-  fmt.printf(
+  printer.printf(
     "Receiving {} ({:M}) {: 3d}%%\r",
     filename,
     r.content_length,

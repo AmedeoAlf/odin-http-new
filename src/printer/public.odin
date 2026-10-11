@@ -4,6 +4,19 @@ import "core:fmt"
 import "core:thread"
 import "core:time"
 
+// I'll bother another day
+eprintln :: println
+eprintfln :: printfln
+
+printf :: proc(fmt_: string, args: ..any) {
+  if !_check_printer() {
+    fmt.printf(fmt_, ..args)
+    return
+  }
+
+  _append_to_printer(fmt.aprintf(fmt_, ..args))
+}
+
 println :: proc(args: ..any, sep: string = " ") {
   if !_check_printer() {
     fmt.println(..args, sep = sep)
