@@ -122,14 +122,11 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
   fd, err := os.open(filename, {.Write, .Create})
   defer os.close(fd)
   if err != nil {
-    str := fmt.tprintfln(
-      "HTTP/1.1 500 Internal Server Error\r\n" +
-      "Content-type: text/plain\r\n" +
-      "\r\n" +
+    send_error(
+      r.from.sock,
       "Encountered an error while creating file: {}\r\n",
       err,
     )
-    net.send(r.from.sock, transmute([]u8)(str))
     return false
   }
 
@@ -139,7 +136,7 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
 
   if !send_fn(r, fd, filename) {
     os.remove(filename)
-    fmt.printfln("could not finish writing files")
+    send_error(r.from.sock, "could not finish writing file: {}", err)
     return false
   }
 
@@ -166,7 +163,14 @@ multiplatform_recv_file :: proc(
   total_read := 0
   for total_read < r.content_length {
     buf, tcp_err := tcp_reader.empty_buffer(&r.from)
-    if tcp_err != .None do return false
+    if tcp_err != .None {
+      fmt.eprintfln(
+        "got a tcp error ({}) while receiving '{}'",
+        tcp_err,
+        filename,
+      )
+      return false
+    }
     fmt.printf(
       "Receiving {} ({:M}) {: 3d}%%\r",
       filename,
@@ -175,14 +179,12 @@ multiplatform_recv_file :: proc(
     )
     total_read += len(buf)
     if written, err := os.write(fd, buf); err != nil {
-      str := fmt.tprintfln(
-        "HTTP/1.1 500 Internal Server Error\r\n" +
-        "Content-type: text/plain\r\n" +
-        "\r\n" +
+      fmt.eprintfln("couldn't write file '{}' because of {}", filename, err)
+      send_error(
+        r.from.sock,
         "Encountered an error while writing file: {}\r\n",
         err,
       )
-      net.send(r.from.sock, transmute([]u8)(str))
       return false
     }
   }

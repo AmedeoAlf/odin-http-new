@@ -128,4 +128,5 @@ send_error :: proc(
     message_fmt,
   )
   net.send(sock, transmute([]u8)(fmt.tprintfln(response_fmt, ..args)))
+  net.close(sock)
 }
