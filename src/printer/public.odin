@@ -1,4 +1,4 @@
-package printer 
+package printer
 
 import "core:fmt"
 import "core:thread"
@@ -25,7 +25,12 @@ printfln :: proc(fmt_: string, args: ..any) {
 _printer_test :: proc() {
   print_fast :: proc(idx: int) {
     for i in 0 ..< 100 {
-      printfln("Thread {} says {:3d} at {}", idx, i, time.tick_now())
+      printfln(
+        "Thread {} says {:2d} at {}",
+        idx,
+        i,
+        time.tick_now()._nsec & 0xffffff,
+      )
     }
   }
   threads: [4]^thread.Thread
