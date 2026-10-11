@@ -11,8 +11,6 @@ main :: proc() {
   }
   free_all(context.temp_allocator)
 
-  printer._printer_test()
-  printer.println("hello????")
   load_mime_types_from_csv(#load("../assets/filetypes.csv"))
   if err := make_and_run_forever(
     addr,

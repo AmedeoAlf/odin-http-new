@@ -23,7 +23,7 @@ Printer :: struct {
 
 _printer: Printer
 
-MIN_PRINT_TIME_RES :: 500 * time.Millisecond
+MIN_PRINT_TIME_RES :: 50 * time.Millisecond
 
 _printer_thread :: proc() {
   for {
