@@ -161,6 +161,16 @@ multiplatform_recv_file :: proc(
   fd: ^os.File,
   filename: string,
 ) -> bool {
+  progress_bar_name := fmt.aprintf(
+    "RECV {} ({:M})",
+    filename,
+    r.content_length,
+  )
+  defer delete(progress_bar_name)
+
+  progress_bar := printer.progress_bar_create(progress_bar_name)
+  defer printer.progress_bar_destroy(progress_bar)
+
   total_read := 0
   for total_read < r.content_length {
     buf, tcp_err := tcp_reader.empty_buffer(&r.from)
@@ -172,11 +182,9 @@ multiplatform_recv_file :: proc(
       )
       return false
     }
-    printer.printf(
-      "Receiving {} ({:M}) {: 3d}%%\r",
-      filename,
-      r.content_length,
-      (total_read * 100 / r.content_length),
+    printer.progress_bar_update(
+      progress_bar,
+      f32(total_read) / f32(r.content_length),
     )
     total_read += len(buf)
     if written, err := os.write(fd, buf); err != nil {

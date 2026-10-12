@@ -1,6 +1,7 @@
 package printer
 
 import "core:fmt"
+import "core:sync"
 import "core:thread"
 import "core:time"
 
@@ -55,6 +56,7 @@ _printer_test :: proc() {
 }
 
 Progress_Bar :: struct {}
+// string is safe to free after progress_bar_destroy
 progress_bar_create :: proc(name: string, progress: f32 = 0) -> ^Progress_Bar {
   bar := new_clone(_Progress_Bar{name = name, progress = progress})
   append(&_printer.progress_bars, bar)
@@ -63,7 +65,7 @@ progress_bar_create :: proc(name: string, progress: f32 = 0) -> ^Progress_Bar {
 
 progress_bar_update :: proc(bar: ^Progress_Bar, progress: f32) {
   bar := cast(^_Progress_Bar)bar
-  bar.progress = progress
+  sync.atomic_store(&bar.progress, progress)
   _append_to_printer("")
 }
 
@@ -71,7 +73,6 @@ progress_bar_destroy :: proc(bar: ^Progress_Bar) {
   bar := cast(^_Progress_Bar)bar
   for b, idx in _printer.progress_bars {
     (b == bar) or_continue
-    delete(_printer.progress_bars[idx].name)
     free(_printer.progress_bars[idx])
     unordered_remove(&_printer.progress_bars, idx)
     return
