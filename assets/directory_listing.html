@@ -157,7 +157,10 @@
                   : undefined
               );
             };
-            req.open("PUT", window.location.pathname + "/" + file.name, true);
+            const path = window.location.pathname.endsWith("/")
+              ? window.location.pathname + file.name
+              : `${window.location.pathname}/${file.name}`
+            req.open("PUT", path, true);
             req.send(file);
           })
         )
