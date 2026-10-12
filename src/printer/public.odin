@@ -53,3 +53,27 @@ _printer_test :: proc() {
   thread.join_multiple(..threads[:])
   for t in threads do thread.destroy(t)
 }
+
+Progress_Bar :: struct {}
+progress_bar_create :: proc(name: string, progress: f32 = 0) -> ^Progress_Bar {
+  bar := new_clone(_Progress_Bar{name = name, progress = progress})
+  append(&_printer.progress_bars, bar)
+  return transmute(^Progress_Bar)bar
+}
+
+progress_bar_update :: proc(bar: ^Progress_Bar, progress: f32) {
+  bar := cast(^_Progress_Bar)bar
+  bar.progress = progress
+  _append_to_printer("")
+}
+
+progress_bar_destroy :: proc(bar: ^Progress_Bar) {
+  bar := cast(^_Progress_Bar)bar
+  for b, idx in _printer.progress_bars {
+    (b == bar) or_continue
+    delete(_printer.progress_bars[idx].name)
+    free(_printer.progress_bars[idx])
+    unordered_remove(&_printer.progress_bars, idx)
+    return
+  }
+}

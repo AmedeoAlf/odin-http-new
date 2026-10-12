@@ -13,10 +13,17 @@ Printer_Status :: enum {
   CantCreate,
 }
 
+_Progress_Bar :: struct {
+  name:     string,
+  progress: f32,
+}
+
 Printer :: struct {
-  mutex:      sync.Mutex,
-  print_chan: chan.Chan(string),
-  status:     Printer_Status,
+  mutex:            sync.Mutex,
+  print_chan:       chan.Chan(string),
+  status:           Printer_Status,
+  progress_bars:    [dynamic]^_Progress_Bar,
+  showing_progress: bool,
 }
 
 _printer: Printer
@@ -36,13 +43,18 @@ _printer_thread :: proc() {
     //
     // print :: proc(s: string) {
     //   fmt.print(str)
-    //   delete(str)
     // }
     Buf :: [dynamic; 4096]byte
     buf: Buf
     print :: proc(s: string, buf: ^Buf) {
-      defer delete(s)
-      if cap(buf) - len(buf) < len(s) do flush(buf)
+      if s == "" do return
+
+      if _printer.showing_progress {
+        _printer.showing_progress = false
+        print("\n", buf)
+      }
+
+      if cap(buf^) - len(buf^) < len(s) do flush(buf)
 
       if cap(buf) / 2 < len(s) {
         fmt.print(s)
@@ -56,11 +68,20 @@ _printer_thread :: proc() {
       fmt.print(string(buf[:]))
       clear(buf)
     }
-
     print(str, &buf)
+    delete(str)
     for str in chan.try_recv(_printer.print_chan) {
       print(str, &buf)
+      delete(str)
     }
+
+    if len(_printer.progress_bars) > 0 {
+      str := fmt.aprintf("{}\r", _printer.progress_bars)
+      print(str, &buf)
+      delete(str)
+      _printer.showing_progress = true
+    }
+
     flush(&buf)
   }
 }
@@ -69,6 +90,11 @@ _check_printer :: proc() -> bool {
   if _printer.status != .Ok {
     sync.mutex_lock(&_printer.mutex)
     if _printer.status == .Ok do return true
+
+    if _printer.status == .Uninit {
+      _printer.progress_bars = make([dynamic]^_Progress_Bar)
+    }
+
     channel, err := chan.create(chan.Chan(string), 100, context.allocator)
     if err != .None {
       if _printer.status != .CantCreate {
