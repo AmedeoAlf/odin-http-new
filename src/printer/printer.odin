@@ -4,7 +4,6 @@ package printer
 import "core:fmt"
 import "core:sync"
 import "core:sync/chan"
-import "core:testing"
 import "core:thread"
 import "core:time"
 
@@ -18,7 +17,6 @@ Printer :: struct {
   mutex:      sync.Mutex,
   print_chan: chan.Chan(string),
   status:     Printer_Status,
-  last_print: time.Tick,
 }
 
 _printer: Printer
@@ -64,8 +62,6 @@ _printer_thread :: proc() {
       print(str, &buf)
     }
     flush(&buf)
-
-    _printer.last_print = now
   }
 }
 
