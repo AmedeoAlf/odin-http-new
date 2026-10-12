@@ -1,6 +1,5 @@
 package http
 
-import "core:fmt"
 import "core:net"
 import "core:reflect"
 import "core:strconv"

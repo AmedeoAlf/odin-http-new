@@ -6,6 +6,7 @@ import "core:net"
 import "core:os"
 import "core:path/filepath"
 import "core:strings"
+import "printer"
 
 known_mime_types: map[string]string = nil
 
@@ -74,7 +75,7 @@ _send_file_header :: proc(
       fmt.sbprintf(&header, "Content-length: %d\r\n", end - r.range_start)
     }
   } else {
-    fmt.println("Couldn't read size of file", file)
+    printer.eprintln("Couldn't read size of file", file)
     fmt.sbprintf(&header, "HTTP/1.1 200 OK\r\n")
   }
   fmt.sbprintf(&header, "Content-type: %s\r\n", get_filetype(path))

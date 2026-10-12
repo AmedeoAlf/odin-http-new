@@ -1,8 +1,8 @@
 package http
 
-import "core:fmt"
 import "core:net"
 import "core:thread"
+import "printer"
 
 MULTITHREADED :: #config(MT, true)
 
@@ -30,7 +30,7 @@ run_forever :: proc(server: Server) {
     client, addr, err := net.accept_tcp(server.sock)
 
     if err != nil {
-      fmt.println("Error in accept_tcp:", err)
+      printer.println("Error in accept_tcp:", err)
       continue
     }
 

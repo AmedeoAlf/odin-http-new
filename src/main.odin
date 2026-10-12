@@ -1,7 +1,7 @@
 package http
 
-import "core:fmt"
 import "core:net"
+import fmt "printer"
 
 main :: proc() {
   addr := net.Endpoint{net.IP4_Address{0, 0, 0, 0}, 3500}
