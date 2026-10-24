@@ -6,18 +6,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Directory listing</title>
   <style>
+    :root {
+      --border-col: oklch(44.2% 0.017 285.786);
+      --fg: oklch(87.1% 0.006 286.286);
+      --light-fg: oklch(70.5% 0.015 286.067);
+      --highlight: oklch(60.6% 0.25 292.717);
+      --highlight-2: oklch(49.1% 0.27 292.581);
+    }
+
+    html {
+      height: 100dvh;
+      overflow-y: clip;
+      background: linear-gradient(in oklab, oklch(28.3% 0.141 291.089), oklch(38% 0.189 293.745));
+      display: flex;
+      flex-direction: column;
+    }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      background-color: #2B1315;
-      color: #F3E3E4;
+      color: var(--fg);
       display: flex;
-      min-height: 90dvh;
-      max-width: 100%;
+      flex-grow: 1;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow-x: hidden;
+      overflow: hidden;
       gap: 5px;
+      padding: 5pt;
     }
 
     form {
@@ -27,14 +42,14 @@
     }
 
     input[type=submit] {
-      background-color: #AB4950;
+      background-color: var(--highlight-2);
       width: 100%;
       padding: 1em;
       border-radius: 1em;
-      color: #F3E3E4;
+      color: var(--fg);
       font-size: 1em;
       border: none;
-      box-shadow: 0 4px 6px -1px #632C30, 0 2px 4px -2px #2B1315;
+      box-shadow: 0 4px 6px -1px black, 0 2px 4px -2px black;
       transition: all 0.2s;
       font-weight: 800;
     }
@@ -44,11 +59,11 @@
     }
 
     input[type=submit]:active {
-      background-color: #632C30;
+      background-color: var(--highlight);
     }
 
     table {
-      background-color: #402d2e;
+      background-color: oklch(27.4% 0.006 286.033);
       border-collapse: collapse;
       min-width: 100%;
     }
@@ -56,16 +71,17 @@
     #table-wrap {
       width: 100%;
       max-width: 600px;
-      border: 1pt solid #FADF63;
+      border: 1pt solid;
+      border-color: var(--border-col);
       border-radius: 1em;
       overflow: auto;
-      box-shadow: 0 4px 6px -1px #632C30, 0 2px 4px -2px #2B1315;
+      flex-grow: 1;
+      box-shadow: 0 4px 6px -1px black, 0 2px 4px -2px black;
     }
 
     th {
       font-weight: bolder;
-      background-color: #FADF63;
-      color: black;
+      color: var(--light-fg);
     }
 
     th,
@@ -73,15 +89,22 @@
       padding: 0.5em;
     }
 
+    th:nth-child(1),
     td:nth-child(1) {
       text-align: center;
       min-width: max-content;
       width: 50px;
-      border-right: 1px solid #FADF63;
+      border-right: 1px solid;
+      border-color: var(--border-col);
     }
 
     a {
-      color: #FBE688;
+      color: var(--highlight);
+      font-weight: bold;
+    }
+
+    a:visited {
+      color: var(--highlight-2);
     }
   </style>
 </head>
