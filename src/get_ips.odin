@@ -26,6 +26,7 @@ get_ips :: proc(allocator := context.temp_allocator) -> []Ip {
   for curr := ifaddrs; curr != nil; curr = curr.ifa_next {
     (.IFF_UP in curr.ifa_flags) or_continue
     (.IFF_LOOPBACK not_in curr.ifa_flags) or_continue
+    (curr.ifa_addr != nil) or_continue
     ip: Ip
     #partial switch curr.ifa_addr.sa_family {
     case .INET:
