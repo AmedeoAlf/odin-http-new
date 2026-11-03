@@ -1,3 +1,4 @@
+#+feature dynamic-literals
 package http
 
 import "core:fmt"
@@ -5,8 +6,11 @@ import "core:net"
 import "core:os"
 import "core:strings"
 import "core:sys/linux"
+import html "html_template"
+import mo "maybe_owned"
 import "printer"
 import "tcp_reader"
+import "utils"
 
 slash_as_index_html: Request_Handler : proc(r: ^Request) -> bool {
   if r.route != "" || r.method != .GET do return true
@@ -68,31 +72,34 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
   )
 
   {
-    builder := strings.builder_make_none()
-    defer strings.builder_destroy(&builder)
     for f in files {
-      strings.builder_reset(&builder)
-      fmt.sbprintfln(&builder, "      <tr>")
-
+      size_col, name_col: html.Node
       if f.type == .Directory {
-        fmt.sbprintfln(&builder, "        <td>dir</td>")
-        fmt.sbprintfln(
-          &builder,
-          "        <td><a href=\"%s/%s\">%[1]s/</a></td>",
-          r.route,
-          f.name,
+        size_col = html.str("dir")
+        name_col = html.el(
+          "a",
+          mo.aprintf("%s/", f.name),
+          props = mo.aprintf("href='%s/%s'", r.route, f.name),
         )
       } else {
-        fmt.sbprintfln(&builder, "        <td>%M</td>", f.size)
-        fmt.sbprintfln(
-          &builder,
-          "        <td><a href=\"/%s/%s\">%[1]s</a></td>",
-          r.route,
-          f.name,
+        size_col = mo.aprintf("%M", f.size)
+        name_col = html.el(
+          "a",
+          html.str(f.name),
+          props = mo.aprintf("href='/%s/%s'", r.route, f.name),
         )
+        fmt.println(name_col.(^html.Element))
       }
-      fmt.sbprintfln(&builder, "      </tr>")
-      net.send(r.from.sock, builder.buf[:])
+
+      w := utils.sock_to_writer(r.from.sock)
+      err := html.to_html(
+        html.el("tr", html.el("td", size_col), html.el("td", name_col)),
+        w,
+      )
+      if err != .None {
+        fmt.eprintln(err, "while sending directory listing")
+      }
+      // net.send(r.from.sock, builder.buf[:])
     }
   }
 
