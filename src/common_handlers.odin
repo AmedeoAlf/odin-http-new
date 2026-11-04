@@ -140,8 +140,7 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
   }
 
   send_fn ::
-    linux_recv_file when false &&
-    ODIN_OS == .Linux else multiplatform_recv_file
+    linux_recv_file when ODIN_OS == .Linux else multiplatform_recv_file
 
   if !send_fn(r, fd, filename) {
     os.remove(filename)
@@ -151,13 +150,11 @@ upload_file: Request_Handler : proc(r: ^Request) -> bool {
 
   printer.printfln("Finished receiving {} ({:M})", filename, r.content_length)
 
-  str := fmt.tprintfln(
+  str :=
     "HTTP/1.1 201 Created\r\n" +
     "Content-type: text/plain\r\n" +
     "\r\n" +
-    "File created successfully\r\n",
-    err,
-  )
+    "File created successfully\r\n"
   net.send(r.from.sock, transmute([]u8)(str))
 
   return false
@@ -246,20 +243,24 @@ linux_recv_file :: proc(r: ^Request, fd: ^os.File, filename: string) -> bool {
   bytes_in_pipe: uint = 0
   // TODO: EINTR/EAGAIN should trigger a retry
   for total_read < r.content_length {
+    // s: linux.Stat
+    // linux.fstat(pipes[0], &s)
+    // fmt.println(s.mode)
     written, err := linux.splice(
       fd_in,
       nil,
-      pipes[0],
+      pipes[1],
       nil,
       uint(r.content_length - total_read),
-      {.MOVE, .MORE},
+      {.MOVE},
     )
     if err != .NONE {
       send_error(
         r.from.sock,
-        "{} while splicing to pipe ({} total bytes)",
+        "{} while splicing to pipe ({} total bytes) {}",
         err,
         total_read,
+        #location(),
       )
       return false
     }
@@ -271,14 +272,15 @@ linux_recv_file :: proc(r: ^Request, fd: ^os.File, filename: string) -> bool {
       fd_out,
       nil,
       bytes_in_pipe,
-      {.MOVE, .MORE},
+      {.MOVE},
     )
     if err != .NONE {
       send_error(
         r.from.sock,
-        "{} while splicing from pipe ({} total bytes)",
+        "{} while splicing from pipe ({} total bytes) {}",
         err,
         total_read,
+        #location(),
       )
       return false
     }
