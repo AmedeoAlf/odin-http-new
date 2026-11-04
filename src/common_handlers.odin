@@ -4,7 +4,6 @@ package http
 import "core:fmt"
 import "core:net"
 import "core:os"
-import "core:strings"
 import "core:sys/linux"
 import html "html_template"
 import mo "maybe_owned"
@@ -71,6 +70,7 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
     ),
   )
 
+  FMT_STR := "href='{}/{}'" if r.route == "" else "href='/{}/{}'"
   {
     for f in files {
       size_col, name_col: html.Node
@@ -78,17 +78,18 @@ send_directory_listing: Request_Handler : proc(r: ^Request) -> bool {
         size_col = html.str("dir")
         name_col = html.el(
           "a",
-          mo.aprintf("%s/", f.name),
-          props = mo.aprintf("href='%s/%s'", r.route, f.name),
+          // NOTE: (20261104 - odin dev-2026-10) something's wrong with
+          // varargs, must use this syntax
+          ..[]html.Node{mo.aprintf("%s/", f.name)},
+          props = mo.aprintf(FMT_STR, r.route, f.name),
         )
       } else {
         size_col = mo.aprintf("%M", f.size)
         name_col = html.el(
           "a",
-          html.str(f.name),
-          props = mo.aprintf("href='/%s/%s'", r.route, f.name),
+          ..[]html.Node{html.str(f.name)},
+          props = mo.aprintf(FMT_STR, r.route, f.name),
         )
-        fmt.println(name_col.(^html.Element))
       }
 
       w := utils.sock_to_writer(r.from.sock)
