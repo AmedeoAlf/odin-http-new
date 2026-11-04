@@ -1,6 +1,6 @@
 package http
 
-import "core:encoding/csv"
+import "../build/filetypes"
 import "core:fmt"
 import "core:net"
 import "core:os"
@@ -8,26 +8,26 @@ import "core:path/filepath"
 import "core:strings"
 import "printer"
 
-known_mime_types: map[string]string = nil
-
-load_mime_types_from_csv :: proc(text: string) {
-  r: csv.Reader
-  r.trim_leading_space = true
-  r.reuse_record = true
-  r.reuse_record_buffer = true
-
-  csv.reader_init_with_string(&r, text)
-  defer csv.reader_destroy(&r)
-
-  for record in csv.iterator_next(&r) {
-    known_mime_types[strings.clone(record[0])] = strings.clone(record[1])
-  }
-}
+// known_mime_types: map[string]string = nil
+//
+// load_mime_types_from_csv :: proc(text: string) {
+//   r: csv.Reader
+//   r.trim_leading_space = true
+//   r.reuse_record = true
+//   r.reuse_record_buffer = true
+//
+//   csv.reader_init_with_string(&r, text)
+//   defer csv.reader_destroy(&r)
+//
+//   for record in csv.iterator_next(&r) {
+//     known_mime_types[strings.clone(record[0])] = strings.clone(record[1])
+//   }
+// }
 
 get_filetype :: proc(filename: string) -> (mime: string) {
   ext := filepath.ext(filename)
   if ext == "" do return "application/octet_stream"
-  return known_mime_types[ext[1:]] or_else "application/octet_stream"
+  return filetypes.FILETYPES[ext[1:]] or_else "application/octet_stream"
 }
 
 send_file :: proc(
