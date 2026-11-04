@@ -1,7 +1,6 @@
 package http
 
 import "core:net"
-import "core:strings"
 import mo "maybe_owned"
 import fmt "printer"
 import tcp_reader "tcp_reader"
